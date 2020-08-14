@@ -38,7 +38,7 @@ e.Match("qux") // returns nil
 
 ## Limitations
 
-The implemented algorithm has been optimized to only check conditions that contain a string that can be found in the string, too. 
+The implemented algorithm has been optimized to only check conditions that contain a keyword that can be found in the string, too. 
 That implies that conditions that only contains `NOT` expressions, will never match. **A condition has to contain at least one non-`NOT` expression.** 
 
 Examples: 
