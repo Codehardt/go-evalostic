@@ -35,3 +35,13 @@ e.Match("foobar") // returns [0]
 e.Match("baz") // returns [1]
 e.Match("qux") // returns nil
 ```
+
+## Limitations
+
+The implemented algorithm has been optimized to only check conditions that contain a string that can be found in the string, too. 
+That implies that conditions that only contains `NOT` expressions, will never match. **A condition has to contain at least one non-`NOT` expression.** 
+
+Examples: 
+- **Allowed**: `"foo" AND NOT "bar"`
+- **Not Allowed**: `NOT "foo"`
+- **Not Allowed**: `"foo" OR NOT "bar"` _(in this example, `foo` will match but the `OR NOT "bar"` part will never match!)_
