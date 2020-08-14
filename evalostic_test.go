@@ -1,6 +1,7 @@
 package evalostic
 
 import (
+	"fmt"
 	"testing"
 
 	testify "github.com/stretchr/testify/assert"
@@ -32,4 +33,25 @@ func TestEvalostic(t *testing.T) {
 	assert.ElementsMatch(e.Match("1"), []int{3, 4})
 	assert.ElementsMatch(e.Match("2"), nil)
 	assert.ElementsMatch(e.Match("12"), nil)
+}
+
+func ExampleEvalostic() {
+	e, err := New([]string{
+		`"foo" OR "bar"`,
+		`NOT "foo" AND ("bar" OR "baz")`,
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(e.Match("foo"))
+	fmt.Println(e.Match("bar"))
+	fmt.Println(e.Match("foobar"))
+	fmt.Println(e.Match("baz"))
+	fmt.Println(e.Match("qux"))
+	// Output:
+	// [0]
+	// [0 1]
+	// [0]
+	// [1]
+	// []
 }
