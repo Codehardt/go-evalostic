@@ -10,6 +10,7 @@ import (
 	"github.com/cloudflare/ahocorasick"
 )
 
+// Evalostic is a matcher that can apply multiple conditions on a string.
 type Evalostic struct {
 	conditions  []node
 	ahoCorasick *ahocorasick.Matcher
@@ -17,6 +18,7 @@ type Evalostic struct {
 	mapping     map[int][]int // which string can be found in which condition
 }
 
+// New builds a new Evalostic matcher that compiles all conditions to one big rule set that can be applied to strings.
 func New(conditions []string) (*Evalostic, error) {
 	e := Evalostic{
 		conditions: make([]node, len(conditions)),
