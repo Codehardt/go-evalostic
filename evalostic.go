@@ -29,6 +29,9 @@ func New(conditions []string) (*Evalostic, error) {
 	var stringCounter int
 	var allStrings []string
 	for i, condition := range conditions {
+		if condition == "" {
+			continue // allow empty conditions but ignore them
+		}
 		root, err := parseCondition(condition)
 		if err != nil {
 			return nil, fmt.Errorf("condition %d: %s", i, err)
@@ -49,14 +52,22 @@ func New(conditions []string) (*Evalostic, error) {
 			e.mapping[strI] = append(e.mapping[strI], i)
 		}
 	}
-	e.ahoCorasick = ahocorasick.NewStringMatcher(allStrings)
+	if len(allStrings) > 0 {
+		e.ahoCorasick = ahocorasick.NewStringMatcher(allStrings)
+	}
 	return &e, nil
 }
 
 // Match returns all indices of conditions that match the provided string
 func (e *Evalostic) Match(s string) (matchingConditions []int) {
-	stringIndices := e.ahoCorasick.Match([]byte(s))
-	stringIndicesCaseInsensitive := e.ahoCorasick.Match([]byte(strings.ToLower(s)))
+	var (
+		stringIndices                []int
+		stringIndicesCaseInsensitive []int
+	)
+	if e.ahoCorasick != nil {
+		stringIndices = e.ahoCorasick.Match([]byte(s))
+		stringIndicesCaseInsensitive = e.ahoCorasick.Match([]byte(strings.ToLower(s)))
+	}
 	possibleConditions := make(map[int]struct{})
 	for _, cond := range e.negatives {
 		possibleConditions[cond] = struct{}{}
