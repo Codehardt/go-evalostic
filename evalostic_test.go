@@ -35,7 +35,7 @@ func TestEvalostic(t *testing.T) {
 	assert.ElementsMatch(e.Match("12"), nil)
 }
 
-func ExampleEvalostic() {
+func ExampleMatch() {
 	e, err := New([]string{
 		`"foo" OR "bar"`,
 		`NOT "foo" AND ("bar" OR "baz")`,
@@ -54,4 +54,43 @@ func ExampleEvalostic() {
 	// [0]
 	// [1]
 	// []
+}
+
+func ExampleMatch_Negative() {
+	e, err := New([]string{
+		`NOT "foo" AND NOT "bar"`,
+		`NOT ("foo" AND "bar" AND "baz")`,
+		`"foo" OR NOT "baz"`,
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(e.Match("foo"))
+	fmt.Println(e.Match("bar"))
+	fmt.Println(e.Match("baz"))
+	fmt.Println(e.Match("foo bar"))
+	fmt.Println(e.Match("foo bar baz"))
+	fmt.Println(e.Match("qux"))
+	// Output:
+	// [1 2]
+	// [1 2]
+	// [0 1]
+	// [1 2]
+	// [2]
+	// [0 1 2]
+}
+
+func ExampleNegatives() {
+	e, err := New([]string{
+		`"foo"`,
+		`NOT "foo"`,
+		`"foo" AND NOT "bar"`,
+		`"foo" OR NOT "bar"`,
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(e.Negatives())
+	// Output:
+	// [1 3]
 }

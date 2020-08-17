@@ -1,4 +1,5 @@
 [![GoDoc](https://godoc.org/github.com/Codehardt/go-evalostic?status.svg)](https://godoc.org/github.com/Codehardt/go-evalostic)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## go-evalostic
 
@@ -7,24 +8,19 @@
 ## Usage
 
 The usage of `go-evalotic` is very simple. Just define a list of **conditions** and pass it to the constructor. You will then have 
-access to a matcher that can apply all conditions to a specific string.
+access to a matcher that can apply all conditions to a specific string and returns the indices of all matching conditions.
 
-```golang
-e, err := evalostic.New([]string{
-    /* your conditions */
-})
-if err != nil {
-    /* malformed condition */
-}
-matchingConditions := e.Match(/* your string */)
-```
+## Condition Syntax
 
-## Example
+All strings in a condition have to be quoted with `"`. Multiple strings can be concatenated with the keywords `AND`, `OR` and parentheses `(` `)`. Strings or subconditions can be negated with `NOT`. **Example**: `"foo" AND NOT ("bar" OR "baz")`
+
+## Code Example
 
 ```golang
 e, err := evalostic.New([]string{
     `"foo" OR "bar"`,
     `NOT "foo" AND ("bar" OR "baz")`,
+    // add more conditions here
 })
 if err != nil {
     panic(err)
@@ -35,13 +31,3 @@ e.Match("foobar") // returns [0]
 e.Match("baz") // returns [1]
 e.Match("qux") // returns nil
 ```
-
-## Limitations
-
-The implemented algorithm has been optimized to only check conditions that contain a keyword that can be found in the string, too. 
-That implies that conditions that only contains `NOT` expressions, will never match. **A condition has to contain at least one non-`NOT` expression.** 
-
-Examples: 
-- **Allowed**: `"foo" AND NOT "bar"`
-- **Not Allowed**: `NOT "foo"`
-- **Not Allowed**: `"foo" OR NOT "bar"` _(in this example, `foo` will match but the `OR NOT "bar"` part will never match!)_
