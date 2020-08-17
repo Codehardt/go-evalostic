@@ -15,6 +15,7 @@ access to a matcher that can apply all conditions to a specific string and retur
 All strings in a condition have to be quoted (they will be unquoted with `strconv.Unquote()`). Multiple strings can be concatenated with the keywords `AND`, `OR` and parentheses `(` `)`. Strings or subconditions can be negated with `NOT`. Per default, strings are case sensitive. To make a string case insensitive, add a `i` after quotes. 
 
 **Example (Case Sensitive)**: `"foo" AND NOT ("bar" OR "baz")`
+
 **Example (Case Insensitive)**: `"foo"i AND NOT ("bar"i OR "baz"i)`
 
 ## Code Example
