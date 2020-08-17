@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cloudflare/ahocorasick"
+	"github.com/Codehardt/go-ahocorasick"
 )
 
 // Evalostic is a matcher that can apply multiple conditions on a string with some performance optimizations.
@@ -13,7 +13,7 @@ import (
 // these strings will be filtered with the Aho-Corasick algorithm. The only exception are negative conditions (see comment of: Negatives() function).
 type Evalostic struct {
 	conditions  []node
-	ahoCorasick *ahocorasick.Matcher
+	ahoCorasick ahocorasick.AhoCorasick
 	strings     map[string]int
 	mapping     map[int][]int // which string can be found in which condition
 	negatives   []int         // conditions that contain strings in a NOT path
@@ -53,7 +53,7 @@ func New(conditions []string) (*Evalostic, error) {
 		}
 	}
 	if len(allStrings) > 0 {
-		e.ahoCorasick = ahocorasick.NewStringMatcher(allStrings)
+		e.ahoCorasick = ahocorasick.New(allStrings)
 	}
 	return &e, nil
 }
@@ -65,8 +65,8 @@ func (e *Evalostic) Match(s string) (matchingConditions []int) {
 		stringIndicesCaseInsensitive []int
 	)
 	if e.ahoCorasick != nil {
-		stringIndices = e.ahoCorasick.Match([]byte(s))
-		stringIndicesCaseInsensitive = e.ahoCorasick.Match([]byte(strings.ToLower(s)))
+		stringIndices = e.ahoCorasick.Match(s)
+		stringIndicesCaseInsensitive = e.ahoCorasick.Match(strings.ToLower(s))
 	}
 	possibleConditions := make(map[int]struct{})
 	for _, cond := range e.negatives {

@@ -1,5 +1,5 @@
-github.com/cloudflare/ahocorasick v0.0.0-20131126104932-1ce46e42b741 h1:8Xzh8Z+jiT/MpNO1RRu4/o4o3hP3iGWJaD5GfaH2Kak=
-github.com/cloudflare/ahocorasick v0.0.0-20131126104932-1ce46e42b741/go.mod h1:tGWUZLZp9ajsxUOnHmFFLnqnlKXsCn6GReG4jAD59H0=
+github.com/Codehardt/go-ahocorasick v0.0.0-20200817171610-7e9649e50ff9 h1:m3jr5XEadRcnRM8ztGrGDI+7gaQtz9uVv/Vm+wg2ty4=
+github.com/Codehardt/go-ahocorasick v0.0.0-20200817171610-7e9649e50ff9/go.mod h1:jrGJMMTGbTw04vDULmSO2xXh0isGXH158Kg+/SkP/bw=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
