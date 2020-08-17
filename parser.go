@@ -3,6 +3,7 @@ package evalostic
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type node interface {
@@ -15,8 +16,8 @@ type (
 	oneSubNode  struct{ node node }
 	twoSubNodes struct{ node1, node2 node }
 	valueNode   struct {
-		nodeValue  string
-		nodeValueI int
+		nodeValue       string
+		caseInsensitive bool
 	}
 )
 
@@ -107,7 +108,11 @@ func parse(tokens []token) (node, error) {
 				tokenFound = true
 				switch tokenType {
 				case tokenTypeVAL:
-					res[i] = nodeVAL{valueNode{nodeValue: token.matched}}
+					matched := token.matched
+					if token.caseInsensitive {
+						matched = strings.ToLower(matched)
+					}
+					res[i] = nodeVAL{valueNode{nodeValue: matched, caseInsensitive: token.caseInsensitive}}
 				default:
 					if i+1 >= len(res) {
 						return nil, fmt.Errorf("missing parameter for %s operator", tokenTypeString[tokenType])

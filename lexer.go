@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 type tokenType int8
@@ -39,15 +40,16 @@ var tokenDefs = []tokenDefinition{
 	{tokenTypeOR, regexp.MustCompile(`^(?i)or`)},
 	{tokenTypeNOT, regexp.MustCompile(`^(?i)not`)},
 	//{tokenTypeVAL, regexp.MustCompile(`^"[^"]*"`)},
-	{tokenTypeVAL, regexp.MustCompile(`^"(?:[^"\\]|\\.)*"`)},
+	{tokenTypeVAL, regexp.MustCompile(`^"(?:[^"\\]|\\.)*"(i?)`)},
 	{tokenTypeLPAR, regexp.MustCompile(`^\(`)},
 	{tokenTypeRPAR, regexp.MustCompile(`^\)`)},
 }
 
 type token struct {
-	tokenType tokenType
-	matched   string
-	pos       int
+	tokenType       tokenType
+	matched         string
+	pos             int
+	caseInsensitive bool
 }
 
 func (t token) String() string {
@@ -63,7 +65,12 @@ recognize:
 			if match != nil {
 				if tokenDef.tokenType != tokenTypeNONE {
 					matched := condition[match[0]:match[1]]
+					var caseInsensitive bool
 					if tokenDef.tokenType == tokenTypeVAL {
+						if strings.HasSuffix(matched, "i") {
+							matched = strings.TrimSuffix(matched, "i")
+							caseInsensitive = true
+						}
 						unquote, err := strconv.Unquote(matched)
 						if err != nil {
 							return nil, fmt.Errorf("could not unquote %s: %s", matched, err)
@@ -71,9 +78,10 @@ recognize:
 						matched = unquote
 					}
 					tokens = append(tokens, token{
-						tokenType: tokenDef.tokenType,
-						matched:   matched,
-						pos:       pos + match[0],
+						tokenType:       tokenDef.tokenType,
+						matched:         matched,
+						pos:             pos + match[0],
+						caseInsensitive: caseInsensitive,
 					})
 				}
 				pos += match[1]

@@ -31,6 +31,9 @@ func conditionMatches(n node, s string) bool {
 	case nodeNOT:
 		return !conditionMatches(v.node, s)
 	case nodeVAL:
+		if v.caseInsensitive {
+			return strings.Contains(strings.ToLower(s), v.nodeValue)
+		}
 		return strings.Contains(s, v.nodeValue)
 	default:
 		return false

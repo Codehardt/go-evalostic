@@ -3,6 +3,7 @@ package evalostic
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/cloudflare/ahocorasick"
 )
@@ -55,11 +56,12 @@ func New(conditions []string) (*Evalostic, error) {
 // Match returns all indices of conditions that match the provided string
 func (e *Evalostic) Match(s string) (matchingConditions []int) {
 	stringIndices := e.ahoCorasick.Match([]byte(s))
+	stringIndicesCaseInsensitive := e.ahoCorasick.Match([]byte(strings.ToLower(s)))
 	possibleConditions := make(map[int]struct{})
 	for _, cond := range e.negatives {
 		possibleConditions[cond] = struct{}{}
 	}
-	for _, strI := range stringIndices {
+	for _, strI := range append(stringIndices, stringIndicesCaseInsensitive...) {
 		for _, conditionI := range e.mapping[strI] {
 			possibleConditions[conditionI] = struct{}{}
 		}

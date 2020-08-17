@@ -94,3 +94,21 @@ func ExampleNegatives() {
 	// Output:
 	// [1 3]
 }
+
+func ExampleMatch_CaseInsensitive() {
+	e, err := New([]string{
+		`"FOO"i AND "bar"`,
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(e.Match("foo bar"))
+	fmt.Println(e.Match("FoO BaR"))
+	fmt.Println(e.Match("FOO BAR"))
+	fmt.Println(e.Match("FoO bar"))
+	// Output:
+	// [0]
+	// []
+	// []
+	// [0]
+}
