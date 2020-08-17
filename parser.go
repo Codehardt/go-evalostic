@@ -21,13 +21,13 @@ type (
 	}
 )
 
-func (_ oneSubNode) Value() string  { return "" }
-func (_ twoSubNodes) Value() string { return "" }
-func (n valueNode) Value() string   { return n.nodeValue }
+func (oneSubNode) Value() string  { return "" }
+func (twoSubNodes) Value() string { return "" }
+func (n valueNode) Value() string { return n.nodeValue }
 
 func (n oneSubNode) Children() (node, node)  { return n.node, nil }
 func (n twoSubNodes) Children() (node, node) { return n.node1, n.node2 }
-func (_ valueNode) Children() (node, node)   { return nil, nil }
+func (valueNode) Children() (node, node)     { return nil, nil }
 
 type (
 	nodeAND struct{ twoSubNodes }
