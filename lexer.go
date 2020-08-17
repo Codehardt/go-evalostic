@@ -3,6 +3,7 @@ package evalostic
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 )
 
 type tokenType int8
@@ -37,7 +38,8 @@ var tokenDefs = []tokenDefinition{
 	{tokenTypeAND, regexp.MustCompile(`^(?i)and`)},
 	{tokenTypeOR, regexp.MustCompile(`^(?i)or`)},
 	{tokenTypeNOT, regexp.MustCompile(`^(?i)not`)},
-	{tokenTypeVAL, regexp.MustCompile(`^"[^"]*"`)},
+	//{tokenTypeVAL, regexp.MustCompile(`^"[^"]*"`)},
+	{tokenTypeVAL, regexp.MustCompile(`^"(?:[^"\\]|\\.)*"`)},
 	{tokenTypeLPAR, regexp.MustCompile(`^\(`)},
 	{tokenTypeRPAR, regexp.MustCompile(`^\)`)},
 }
@@ -60,9 +62,17 @@ recognize:
 			match := tokenDef.definition.FindStringSubmatchIndex(condition)
 			if match != nil {
 				if tokenDef.tokenType != tokenTypeNONE {
+					matched := condition[match[0]:match[1]]
+					if tokenDef.tokenType == tokenTypeVAL {
+						unquote, err := strconv.Unquote(matched)
+						if err != nil {
+							return nil, fmt.Errorf("could not unquote %s: %s", matched, err)
+						}
+						matched = unquote
+					}
 					tokens = append(tokens, token{
 						tokenType: tokenDef.tokenType,
-						matched:   condition[match[0]:match[1]],
+						matched:   matched,
 						pos:       pos + match[0],
 					})
 				}

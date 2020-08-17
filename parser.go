@@ -107,7 +107,7 @@ func parse(tokens []token) (node, error) {
 				tokenFound = true
 				switch tokenType {
 				case tokenTypeVAL:
-					res[i] = nodeVAL{valueNode{nodeValue: token.matched[1 : len(token.matched)-1]}}
+					res[i] = nodeVAL{valueNode{nodeValue: token.matched}}
 				default:
 					if i+1 >= len(res) {
 						return nil, fmt.Errorf("missing parameter for %s operator", tokenTypeString[tokenType])
