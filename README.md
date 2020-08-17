@@ -12,7 +12,8 @@ access to a matcher that can apply all conditions to a specific string and retur
 
 ## Condition Syntax
 
-All strings in a condition have to be quoted with `"`. Multiple strings can be concatenated with the keywords `AND`, `OR` and parentheses `(` `)`. Strings or subconditions can be negated with `NOT`. **Example**: `"foo" AND NOT ("bar" OR "baz")`
+All strings in a condition have to be quoted with `"`. Multiple strings can be concatenated with the keywords `AND`, `OR` and parentheses `(` `)`. Strings or subconditions can be negated with `NOT`. 
+**Example**: `"foo" AND NOT ("bar" OR "baz")`
 
 ## Code Example
 
