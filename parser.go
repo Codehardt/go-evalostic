@@ -3,13 +3,16 @@ package evalostic
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
 type node interface {
 	String() string
+	Condition() string
 	Value() string
 	Children() (node, node)
+	NormalForm() node
 }
 
 type (
@@ -69,11 +72,11 @@ func parse(tokens []token) (node, error) {
 		)
 		for {
 			if offset >= len(tokens)-1 {
-				return nil, errors.New("missing matching closing parentheses")
+				return nil, errors.New("missing matching closing parentheses 1")
 			}
 			rPos = findToken(tokens[offset:], tokenTypeRPAR)
 			if rPos < 0 {
-				return nil, errors.New("missing matching closing parentheses")
+				return nil, errors.New("missing matching closing parentheses 2")
 			}
 			rPos += offset
 			if lPos+1 == rPos {
@@ -157,4 +160,23 @@ func parse(tokens []token) (node, error) {
 		return nil, errors.New("start node is not a node")
 	}
 	return startNode, nil
+}
+
+func (n nodeAND) Condition() string {
+	return fmt.Sprintf("(%s AND %s)", n.node1.Condition(), n.node2.Condition())
+}
+
+func (n nodeOR) Condition() string {
+	return fmt.Sprintf("(%s OR %s)", n.node1.Condition(), n.node2.Condition())
+}
+
+func (n nodeVAL) Condition() string {
+	if n.caseInsensitive {
+		return strconv.Quote(n.nodeValue) + "i"
+	}
+	return strconv.Quote(n.nodeValue)
+}
+
+func (n nodeNOT) Condition() string {
+	return fmt.Sprintf("NOT %s", n.node.Condition())
 }
