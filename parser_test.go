@@ -15,12 +15,10 @@ func Example_parse() {
 		fmt.Printf("----- %s -----\n", cond)
 		fmt.Println(root.String())
 	}
-	/*p(`"foo"`)
+	p(`"foo"`)
 	p(`"foo" AND "bar"`)
 	p(`"foo" AND NOT "bar"`)
 	p(`"foo" AND NOT ("bar" OR "baz")`)
-	p(`"foo" AND (("bar") AND "baz")`)*/
-	p(`"foo" AND ("bar" AND ("baz"))`)
 	// Output:
 	// ----- "foo" -----
 	// nodeVAL{"foo"}

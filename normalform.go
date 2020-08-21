@@ -6,15 +6,23 @@ import (
 	"strings"
 )
 
-type matchstr struct {
+type andString struct {
 	not bool
-	ci  bool
+	ci  bool // case insensitivity
 	str string
 }
 
-type matchpath []matchstr
+type andStringIndex struct {
+	not bool
+	ci  bool // case insensitivity
+	i   int
+}
 
-func (m matchpath) String() string {
+type andPath []andString
+
+type andPathIndex []andStringIndex
+
+func (m andPath) String() string {
 	allStrings := make([]string, len(m))
 	for i, str := range m {
 		allStrings[i] = str.String()
@@ -22,7 +30,7 @@ func (m matchpath) String() string {
 	return strings.Join(allStrings, ", ")
 }
 
-func (m matchstr) String() string {
+func (m andString) String() string {
 	var suffix string
 	if m.ci {
 		suffix = "i"
@@ -34,8 +42,8 @@ func (m matchstr) String() string {
 	return fmt.Sprintf("%s%q%s", prefix, m.str, suffix)
 }
 
-func MatchStrings(n node) []matchpath {
-	res := matchStrings(n)
+func getAndPaths(n node) []andPath {
+	res := getUnsortedAndPaths(n)
 	for _, path := range res {
 		sort.Slice(path, func(i, j int) bool {
 			s1, s2 := path[i], path[j]
@@ -51,24 +59,24 @@ func MatchStrings(n node) []matchpath {
 	return res
 }
 
-func matchStrings(n node) []matchpath {
+func getUnsortedAndPaths(n node) []andPath {
 	switch v := n.(type) {
 	case nodeAND:
-		return []matchpath{append(matchStrings(v.node1)[0], matchStrings(v.node2)[0]...)}
+		return []andPath{append(getUnsortedAndPaths(v.node1)[0], getUnsortedAndPaths(v.node2)[0]...)}
 	case nodeOR:
-		return append(matchStrings(v.node1), matchStrings(v.node2)...)
+		return append(getUnsortedAndPaths(v.node1), getUnsortedAndPaths(v.node2)...)
 	case nodeNOT:
 		val := v.node.(nodeVAL)
-		return []matchpath{
-			{matchstr{
+		return []andPath{
+			{andString{
 				not: true,
 				ci:  val.caseInsensitive,
 				str: val.nodeValue,
 			}},
 		}
 	case nodeVAL:
-		return []matchpath{
-			{matchstr{
+		return []andPath{
+			{andString{
 				not: false,
 				ci:  v.caseInsensitive,
 				str: v.nodeValue,

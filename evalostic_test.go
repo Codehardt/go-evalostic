@@ -97,21 +97,6 @@ func ExampleMatch_Negative() {
 	// [0 1 2]
 }
 
-func ExampleNegatives() {
-	e, err := New([]string{
-		`"foo"`,
-		`NOT "foo"`,
-		`"foo" AND NOT "bar"`,
-		`"foo" OR NOT "bar"`,
-	})
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(e.Negatives())
-	// Output:
-	// [1 3]
-}
-
 func ExampleMatch_CaseInsensitive() {
 	e, err := New([]string{
 		`"FOO"i AND "bar"`,
