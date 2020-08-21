@@ -44,7 +44,7 @@ func ExampleMatchStrings() {
 			fmt.Println(matchPath.String())
 		}
 	}
-	ms(`("a" AND NOT "b") OR (NOT "c" AND "d")`)
+	ms(`("a" AND NOT "b") AND NOT (NOT "c" OR "d") AND ("f" OR "g")`)
 	// Output:
 	//
 }

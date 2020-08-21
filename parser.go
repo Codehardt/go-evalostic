@@ -71,18 +71,19 @@ func parse(tokens []token) (node, error) {
 			offset = lPos + 1
 		)
 		for {
-			if offset >= len(tokens)-1 {
-				return nil, errors.New("missing matching closing parentheses 1")
+			if offset >= len(tokens) {
+				return nil, errors.New("missing matching closing parentheses")
 			}
 			rPos = findToken(tokens[offset:], tokenTypeRPAR)
 			if rPos < 0 {
-				return nil, errors.New("missing matching closing parentheses 2")
+				return nil, errors.New("missing matching closing parentheses")
 			}
 			rPos += offset
 			if lPos+1 == rPos {
 				return nil, errors.New("empty subexpression found")
 			}
-			if pos := findToken(tokens[offset:rPos], tokenTypeLPAR); pos < 0 {
+			anotherLPos := findToken(tokens[offset:rPos], tokenTypeLPAR)
+			if anotherLPos < 0 {
 				break
 			}
 			offset = rPos + 1
