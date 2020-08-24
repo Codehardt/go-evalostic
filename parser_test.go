@@ -29,3 +29,24 @@ func Example_parse() {
 	// ----- "foo" AND NOT ("bar" OR "baz") -----
 	// nodeAND{nodeVAL{"foo"},nodeNOT{nodeOR{nodeVAL{"bar"},nodeVAL{"baz"}}}}
 }
+
+func Example_parse_multi() {
+	p := func(cond string) {
+		t, err := tokenize(cond)
+		if err != nil {
+			panic(err)
+		}
+		root, err := parse(t)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("----- %s -----\n", cond)
+		fmt.Println(root.Condition())
+	}
+	p(`NOT "foo" OR NOT "bar" OR NOT "baz" OR NOT "qux"`)
+	p(`"qux" AND "foo" OR "bar" AND "baz"`)
+	p(`"qux" OR "foo" AND "bar" OR "baz"`)
+	// Output:
+	// ----- "foo" OR "bar" OR "baz" OR "qux" -----
+	// nodeOR{nodeOR{nodeVAL{"foo"},nodeVAL{"bar"}},nodeOR{nodeVAL{"baz"},nodeVAL{"qux"}}}
+}
