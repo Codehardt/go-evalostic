@@ -47,6 +47,10 @@ func Example_parse_multi() {
 	p(`"qux" AND "foo" OR "bar" AND "baz"`)
 	p(`"qux" OR "foo" AND "bar" OR "baz"`)
 	// Output:
-	// ----- "foo" OR "bar" OR "baz" OR "qux" -----
-	// nodeOR{nodeOR{nodeVAL{"foo"},nodeVAL{"bar"}},nodeOR{nodeVAL{"baz"},nodeVAL{"qux"}}}
+	// ----- NOT "foo" OR NOT "bar" OR NOT "baz" OR NOT "qux" -----
+	// ((NOT "foo" OR NOT "bar") OR (NOT "baz" OR NOT "qux"))
+	// ----- "qux" AND "foo" OR "bar" AND "baz" -----
+	// (("qux" AND "foo") OR ("bar" AND "baz"))
+	// ----- "qux" OR "foo" AND "bar" OR "baz" -----
+	// (("qux" OR ("foo" AND "bar")) OR "baz")
 }
