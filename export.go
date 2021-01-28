@@ -2,6 +2,7 @@ package evalostic
 
 import (
 	"encoding/json"
+	"strings"
 )
 
 // ExportElasticSearchQuery exports the compiled query into an ElasticSearch query, e.g.
@@ -27,13 +28,15 @@ func (e *Evalostic) ExportElasticSearchQueryMap(wildcardField string) map[string
 	return query
 }
 
+var wildcardReplacer = strings.NewReplacer("\\", "\\\\", "*", "\\*", "?", "\\?")
+
 func (e *Evalostic) exportElasticSearchQuerySub(wildcardField string, indexToStrings map[int]string, entry decisionTreeEntry, node *decisionTreeNode) map[string]interface{} {
 
 	isLeaf := len(node.outputs) != 0
 	wildcard := map[string]interface{}{
 		"wildcard": map[string]interface{}{
 			wildcardField: map[string]interface{}{
-				"value":            "*" + indexToStrings[entry.value] + "*",
+				"value":            "*" + wildcardReplacer.Replace(indexToStrings[entry.value]) + "*",
 				"case_insensitive": entry.ci,
 			},
 		},
