@@ -6,7 +6,7 @@ import (
 
 // ExportElasticSearchQuery exports the compiled query into an ElasticSearch query, e.g.
 // `"foo" OR "baz"` will be compiled to
-// {"bool":{"should":[{"wildcard":{"raw":{"case_insensitive":false,"value":"foo"}}},{"wildcard":{"raw":{"case_insensitive":false,"value":"bar"}}}]}}
+// {"bool":{"should":[{"wildcard":{"raw":{"case_insensitive":false,"value":"*foo*"}}},{"wildcard":{"raw":{"case_insensitive":false,"value":"*bar*"}}}]}}
 func (e *Evalostic) ExportElasticSearchQuery(wildcardField string) string {
 	b, _ := json.Marshal(e.ExportElasticSearchQueryMap(wildcardField))
 	return string(b)
@@ -33,7 +33,7 @@ func (e *Evalostic) exportElasticSearchQuerySub(wildcardField string, indexToStr
 	wildcard := map[string]interface{}{
 		"wildcard": map[string]interface{}{
 			wildcardField: map[string]interface{}{
-				"value":            indexToStrings[entry.value],
+				"value":            "*" + indexToStrings[entry.value] + "*",
 				"case_insensitive": entry.ci,
 			},
 		},
