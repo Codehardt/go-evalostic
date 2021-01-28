@@ -8,6 +8,8 @@ func TestElasticSearchQueryExport(t *testing.T) {
 		`"foo" OR "bar"`,
 		`"foo" AND "bar"`,
 		`"foo" AND NOT "bar"`,
+		`"foo" OR ("bar" AND NOT "baz")`,
+		`"foo" OR NOT ("bar" AND NOT "baz")`,
 		`("foo" OR "bar") AND NOT ("bar" AND ("baz" OR "qux"))`,
 	} {
 		ev, err := New([]string{condition})
