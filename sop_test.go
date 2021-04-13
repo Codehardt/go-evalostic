@@ -74,15 +74,15 @@ func ExampleSOP() {
 }
 
 func ExampleSOP_2() {
-	sop(`("a" OR "b") AND NOT ("c" AND "d")`)
-	sop(`NOT (("a" OR "b") AND NOT ("c" AND "d"))`)
+	sop(`("a" OR "b" OR "c") AND NOT ("d" OR "e" OR "f") AND ("g" OR "h" OR "i")`)
+	sop(`NOT (("a" OR "b" OR "c") AND NOT ("d" OR "e" OR "f") AND ("g" OR "h" OR "i"))`)
 	// Output:
-	// ----- ("a" OR "b") AND NOT ("c" AND "d") -----
-	// before: (("a" OR "b") AND NOT ("c" AND "d"))
-	// after: (("a" AND (NOT "c" OR NOT "d")) OR ("b" AND (NOT "c" OR NOT "d")))
-	// ----- NOT (("a" OR "b") AND NOT ("c" AND "d")) -----
-	// before: NOT (("a" OR "b") AND NOT ("c" AND "d"))
-	// after: ((NOT "a" AND NOT "b") OR ("c" AND "d"))
+	// ----- ("a" OR "b" OR "c") AND NOT ("d" OR "e" OR "f") AND ("g" OR "h" OR "i") -----
+	// before: (((("a" OR "b") OR "c") AND NOT (("d" OR "e") OR "f")) AND (("g" OR "h") OR "i"))
+	// after: (((((("a" AND ((NOT "d" AND NOT "e") AND NOT "f")) OR ("b" AND ((NOT "d" AND NOT "e") AND NOT "f"))) OR ("c" AND ((NOT "d" AND NOT "e") AND NOT "f"))) AND "g") OR (((("a" AND ((NOT "d" AND NOT "e") AND NOT "f")) OR ("b" AND ((NOT "d" AND NOT "e") AND NOT "f"))) OR ("c" AND ((NOT "d" AND NOT "e") AND NOT "f"))) AND "h")) OR (((("a" AND ((NOT "d" AND NOT "e") AND NOT "f")) OR ("b" AND ((NOT "d" AND NOT "e") AND NOT "f"))) OR ("c" AND ((NOT "d" AND NOT "e") AND NOT "f"))) AND "i"))
+	// ----- NOT (("a" OR "b" OR "c") AND NOT ("d" OR "e" OR "f") AND ("g" OR "h" OR "i")) -----
+	// before: NOT (((("a" OR "b") OR "c") AND NOT (("d" OR "e") OR "f")) AND (("g" OR "h") OR "i"))
+	// after: ((((NOT "a" AND NOT "b") AND NOT "c") OR (("d" OR "e") OR "f")) OR ((NOT "g" AND NOT "h") AND NOT "i"))
 }
 
 func ExampleMatchStrings() {
