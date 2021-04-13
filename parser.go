@@ -12,7 +12,7 @@ type node interface {
 	Condition() string
 	Value() string
 	Children() (node, node)
-	NormalForm() node
+	SOP() node
 }
 
 type (

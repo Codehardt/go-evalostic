@@ -48,7 +48,7 @@ func New(conditions []string) (*Evalostic, error) {
 			}
 			e.mapping[strI] = append(e.mapping[strI], i)
 		}
-		for _, mp := range getAndPaths(root.NormalForm()) {
+		for _, mp := range getAndPaths(root.SOP()) {
 			mpi := make(andPathIndex, len(mp))
 			for i, ms := range mp {
 				mpi[i] = andStringIndex{ci: ms.ci, not: ms.not, i: e.strings[ms.str]}

@@ -87,8 +87,8 @@ func getUnsortedAndPaths(n node) []andPath {
 	}
 }
 
-func (n nodeAND) NormalForm() node {
-	n.node1 = n.node1.NormalForm()
+func (n nodeAND) SOP() node {
+	//n.node1 = n.node1.SOP()
 	if or, ok := n.node1.(nodeOR); ok {
 		return (nodeOR{
 			twoSubNodes{
@@ -105,9 +105,9 @@ func (n nodeAND) NormalForm() node {
 					},
 				},
 			},
-		}).NormalForm()
+		}).SOP()
 	}
-	n.node2 = n.node2.NormalForm()
+	//n.node2 = n.node2.SOP()
 	if or, ok := n.node2.(nodeOR); ok {
 		return (nodeOR{
 			twoSubNodes{
@@ -124,19 +124,21 @@ func (n nodeAND) NormalForm() node {
 					},
 				},
 			},
-		}).NormalForm()
+		}).SOP()
 	}
+	n.node1 = n.node1.SOP()
+	n.node2 = n.node2.SOP()
 	return n
 }
 
-func (n nodeOR) NormalForm() node {
-	n.node1 = n.node1.NormalForm()
-	n.node2 = n.node2.NormalForm()
+func (n nodeOR) SOP() node {
+	n.node1 = n.node1.SOP()
+	n.node2 = n.node2.SOP()
 	return n
 }
 
-func (n nodeNOT) NormalForm() node {
-	n.node = n.node.NormalForm()
+func (n nodeNOT) SOP() node {
+	//n.node = n.node.SOP()
 	switch v := n.node.(type) {
 	case nodeAND:
 		return (nodeOR{
@@ -152,7 +154,7 @@ func (n nodeNOT) NormalForm() node {
 					},
 				},
 			},
-		}).NormalForm()
+		}).SOP()
 	case nodeOR:
 		return (nodeAND{
 			twoSubNodes{
@@ -167,16 +169,16 @@ func (n nodeNOT) NormalForm() node {
 					},
 				},
 			},
-		}).NormalForm()
+		}).SOP()
 	case nodeVAL:
 		return n
 	case nodeNOT:
-		return v.node
+		return v.node.SOP()
 	default:
 		panic("unknown node type")
 	}
 }
 
-func (n nodeVAL) NormalForm() node {
+func (n nodeVAL) SOP() node {
 	return n
 }

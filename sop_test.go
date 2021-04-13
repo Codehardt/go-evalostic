@@ -2,31 +2,32 @@ package evalostic
 
 import "fmt"
 
-func ExampleNormalForm() {
-	nf := func(cond string) {
-		n, err := parseCondition(cond)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("----- %s -----\n", cond)
-		fmt.Println("before:", n.Condition())
-		n = n.NormalForm()
-		fmt.Println("after:", n.Condition())
+var sop = func(cond string) {
+	n, err := parseCondition(cond)
+	if err != nil {
+		panic(err)
 	}
-	nf(`"a"`)
-	nf(`NOT "a"`)
-	nf(`"a" AND "b"`)
-	nf(`"a" OR "b"`)
-	nf(`"a" AND ("b" OR "c")`)
-	nf(`"a" OR ("b" AND "c")`)
-	nf(`"a" AND NOT ("b" OR "c")`)
-	nf(`"a" OR NOT ("b" AND "c")`)
-	nf(`"a" AND ("b" OR NOT "c")`)
-	nf(`"a" OR ("b" AND NOT "c")`)
-	nf(`"a" AND NOT ("b" OR NOT "c")`)
-	nf(`"a" OR NOT ("b" AND NOT "c")`)
-	nf(`"a" OR ("b" OR ("c" OR "d"))`)
-	nf(`("a" OR "b") OR ("c" OR "d")`)
+	fmt.Printf("----- %s -----\n", cond)
+	fmt.Println("before:", n.Condition())
+	n = n.SOP()
+	fmt.Println("after:", n.Condition())
+}
+
+func ExampleSOP() {
+	sop(`"a"`)
+	sop(`NOT "a"`)
+	sop(`"a" AND "b"`)
+	sop(`"a" OR "b"`)
+	sop(`"a" AND ("b" OR "c")`)
+	sop(`"a" OR ("b" AND "c")`)
+	sop(`"a" AND NOT ("b" OR "c")`)
+	sop(`"a" OR NOT ("b" AND "c")`)
+	sop(`"a" AND ("b" OR NOT "c")`)
+	sop(`"a" OR ("b" AND NOT "c")`)
+	sop(`"a" AND NOT ("b" OR NOT "c")`)
+	sop(`"a" OR NOT ("b" AND NOT "c")`)
+	sop(`"a" OR ("b" OR ("c" OR "d"))`)
+	sop(`("a" OR "b") OR ("c" OR "d")`)
 	// Output:
 	// ----- "a" -----
 	// before: "a"
@@ -72,6 +73,18 @@ func ExampleNormalForm() {
 	// after: (("a" OR "b") OR ("c" OR "d"))
 }
 
+func ExampleSOP_2() {
+	sop(`("a" OR "b") AND NOT ("c" AND "d")`)
+	sop(`NOT (("a" OR "b") AND NOT ("c" AND "d"))`)
+	// Output:
+	// ----- ("a" OR "b") AND NOT ("c" AND "d") -----
+	// before: (("a" OR "b") AND NOT ("c" AND "d"))
+	// after: (("a" AND (NOT "c" OR NOT "d")) OR ("b" AND (NOT "c" OR NOT "d")))
+	// ----- NOT (("a" OR "b") AND NOT ("c" AND "d")) -----
+	// before: NOT (("a" OR "b") AND NOT ("c" AND "d"))
+	// after: ((NOT "a" AND NOT "b") OR ("c" AND "d"))
+}
+
 func ExampleMatchStrings() {
 	ms := func(cond string) {
 		n, err := parseCondition(cond)
@@ -79,7 +92,7 @@ func ExampleMatchStrings() {
 			panic(err)
 		}
 		fmt.Printf("----- %s -----\n", cond)
-		n = n.NormalForm()
+		n = n.SOP()
 		matchStrings := getAndPaths(n)
 		for _, matchPath := range matchStrings {
 			fmt.Println(matchPath.String())
