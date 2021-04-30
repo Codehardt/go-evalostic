@@ -219,6 +219,48 @@ var TheTestConditions = []Condition{
 		),
 	),
 
+	and(
+		not(
+			val("a"),
+		),
+		not(
+			val("b"),
+		),
+		or(
+			val("c"),
+			val("d"),
+			val("e"),
+		),
+	),
+
+	and(
+		val("a"),
+		val("b"),
+		not(
+			or(
+				val("c"),
+				val("d"),
+				val("e"),
+			),
+		),
+	),
+
+	and(
+		not(
+			val("a"),
+		),
+		not(
+			val("b"),
+		),
+		not(
+			or(
+				val("c"),
+				val("d"),
+				val("e"),
+			),
+		),
+	),
+
 	// END
 }
 
