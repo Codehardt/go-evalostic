@@ -4,10 +4,268 @@ import (
 	"fmt"
 	"math/rand"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
 )
+
+type Condition interface {
+	Match(str string) bool
+	GetStrings(into map[string]struct{})
+	ToCondition() string
+}
+
+type NOT struct{ Sub Condition }
+
+func (n NOT) ToCondition() string {
+	if isANDorOR(n.Sub) {
+		return fmt.Sprintf("NOT (%s)", n.Sub.ToCondition())
+	}
+	return fmt.Sprintf("NOT %s", n.Sub.ToCondition())
+}
+
+func (n NOT) GetStrings(into map[string]struct{}) {
+	n.Sub.GetStrings(into)
+}
+
+func (n NOT) Match(str string) bool {
+	return !n.Sub.Match(str)
+}
+
+type AND struct {
+	Sub []Condition
+}
+
+func isANDorOR(sub Condition) bool {
+	_, isAND := sub.(AND)
+	_, isOR := sub.(OR)
+	return isAND || isOR
+}
+
+func (a AND) GetStrings(into map[string]struct{}) {
+	for _, sub := range a.Sub {
+		sub.GetStrings(into)
+	}
+}
+
+func (a AND) ToCondition() string {
+	res := make([]string, len(a.Sub))
+	for i, sub := range a.Sub {
+		if isANDorOR(sub) {
+			res[i] = fmt.Sprintf("(%s)", sub.ToCondition())
+		} else {
+			res[i] = sub.ToCondition()
+		}
+	}
+	return fmt.Sprintf("%s", strings.Join(res, " AND "))
+}
+
+func (a AND) Match(str string) bool {
+	for _, sub := range a.Sub {
+		if !sub.Match(str) {
+			return false
+		}
+	}
+	return true
+}
+
+type OR struct {
+	Sub []Condition
+}
+
+func (a OR) ToCondition() string {
+	res := make([]string, len(a.Sub))
+	for i, sub := range a.Sub {
+		if isANDorOR(sub) {
+			res[i] = fmt.Sprintf("(%s)", sub.ToCondition())
+		} else {
+			res[i] = sub.ToCondition()
+		}
+	}
+	return fmt.Sprintf("%s", strings.Join(res, " OR "))
+}
+func (a OR) GetStrings(into map[string]struct{}) {
+	for _, sub := range a.Sub {
+		sub.GetStrings(into)
+	}
+}
+func or(sub ...Condition) Condition  { return OR{Sub: sub} }
+func and(sub ...Condition) Condition { return AND{Sub: sub} }
+func not(sub Condition) Condition    { return NOT{Sub: sub} }
+func val(str string) Condition       { return VALUE(str) }
+func vali(str string) Condition      { return VALUEI(str) }
+
+func (a OR) Match(str string) bool {
+	for _, sub := range a.Sub {
+		if sub.Match(str) {
+			return true
+		}
+	}
+	return len(a.Sub) == 0
+}
+
+type VALUE string // Case Sensitive
+
+func (v VALUE) Match(str string) bool {
+	return strings.Contains(str, string(v))
+}
+
+func (v VALUE) ToCondition() string {
+	return strconv.Quote(string(v))
+}
+
+func (v VALUE) GetStrings(into map[string]struct{}) {
+	into[string(v)] = struct{}{}
+}
+
+type VALUEI string // Case Insensitive
+
+func (v VALUEI) Match(str string) bool {
+	return strings.Contains(strings.ToLower(str), strings.ToLower(string(v)))
+}
+
+func (v VALUEI) ToCondition() string {
+	return strconv.Quote(string(v)) + "i"
+}
+
+func (v VALUEI) GetStrings(into map[string]struct{}) {
+	into[string(v)] = struct{}{}
+}
+
+// TheTestConditions is used to test conditions in a tree structure against conditions that were
+// parsed with evalostic. It will create a big Condition Comparison Table.
+// Rules for the condition below:
+// 1.) Do not use upper case strings, they will be automatically added in the tests
+// 2.) Do not use more than 10 different strings in the complete conditions
+var TheTestConditions = []Condition{
+	// START
+
+	val("a"),
+
+	vali("a"),
+
+	or(
+		val("a"),
+		val("b"),
+	),
+
+	or(
+		vali("a"),
+		vali("b"),
+	),
+
+	and(
+		val("a"),
+		val("b"),
+	),
+
+	and(
+		vali("a"),
+		vali("b"),
+	),
+
+	not(
+		val("a"),
+	),
+
+	not(
+		vali("a"),
+	),
+
+	not(
+		and(
+			val("a"),
+			val("b"),
+		),
+	),
+
+	not(
+		or(
+			val("a"),
+			val("b"),
+		),
+	),
+
+	and(
+		or(
+			val("a"),
+			val("b"),
+		),
+		or(
+			val("c"),
+			val("d"),
+		),
+	),
+
+	or(
+		and(
+			val("a"),
+			val("b"),
+		),
+		and(
+			val("c"),
+			val("d"),
+		),
+	),
+
+	and(
+		val("a"),
+		val("b"),
+		or(
+			val("c"),
+			val("d"),
+			val("e"),
+		),
+	),
+
+	// END
+}
+
+func TestEvalosticAgainstStringContains(t *testing.T) {
+	fmt.Printf("%100s | %25s | %20s | %20s\n", "Condition", "Test String", "String Contains", "Evalostic Matcher")
+	for _, cond := range TheTestConditions {
+		// collect all strings of the condition that will be used to check all combinations against the strings
+		strMap := make(map[string]struct{})
+		cond.GetStrings(strMap)
+		var allStrings []string
+		for str := range strMap {
+			allStrings = append(allStrings, str, strings.ToUpper(str))
+		}
+		if len(allStrings) > 20 {
+			t.Fatalf("too many string exported, this would lead to memory issues")
+		}
+		sort.Strings(allStrings)
+		// build the condition string that will be compared to the string contains method
+		condition := cond.ToCondition()
+		ev, err := New([]string{condition})
+		if err != nil {
+			t.Fatalf("parse %s: %s", condition, err)
+		}
+		// prepare the two matchers
+		matcher1 := func(str string) bool {
+			return len(ev.Match(str)) > 0
+		}
+		matcher2 := cond.Match
+		compareStrings := []string{""}
+		for _, str := range allStrings {
+			deepCopy := make([]string, len(compareStrings), len(compareStrings)*2)
+			copy(deepCopy, compareStrings)
+			for _, compareString := range compareStrings {
+				deepCopy = append(deepCopy, compareString+str)
+			}
+			compareStrings = deepCopy
+		}
+		for _, str := range compareStrings {
+			matches1 := matcher1(str)
+			matches2 := matcher2(str)
+			fmt.Printf("%100s | %25s | %20s | %20s\n", condition, strconv.Quote(str), strconv.FormatBool(matches1), strconv.FormatBool(matches2))
+			if matches1 != matches2 {
+				t.Errorf("wrong behaviour for condition %s string %q string contains %t evalostic %t", condition, str, matches1, matches2)
+			}
+		}
+	}
+}
 
 func assert(t *testing.T, b bool) {
 	_, f, l, _ := runtime.Caller(1)

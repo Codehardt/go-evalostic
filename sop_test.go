@@ -1,6 +1,10 @@
 package evalostic
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
 
 var sop = func(cond string) {
 	n, err := parseCondition(cond)
@@ -11,6 +15,87 @@ var sop = func(cond string) {
 	fmt.Println("before:", n.Condition())
 	n = n.SOP()
 	fmt.Println("after:", n.Condition())
+}
+
+func dnf(cond string) {
+	n, err := parseCondition(cond)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("before:", cond)
+	var res []string
+	for _, mp := range getAndPaths(n.SOP()) {
+		var part []string
+		for _, str := range mp {
+			val := strconv.Quote(str.str)
+			if str.ci {
+				val += "i"
+			}
+			if str.not {
+				val = "NOT " + val
+			}
+			part = append(part, val)
+		}
+		res = append(res, strings.Join(part, " AND "))
+	}
+	if len(res) == 0 {
+		fmt.Println("after: -")
+	} else if len(res) == 1 {
+		fmt.Println("after:", res[0])
+	} else {
+		for i, s := range res {
+			if strings.Contains(s, " AND ") {
+				res[i] = "(" + s + ")"
+			}
+		}
+		fmt.Println("after:", strings.Join(res, " OR "))
+	}
+}
+
+func ExampleDNF() {
+	dnf(`"a"`)
+	dnf(`NOT "a"`)
+	dnf(`"a" AND "b"`)
+	dnf(`"a" OR "b"`)
+	dnf(`"a" AND ("b" OR "c")`)
+	dnf(`"a" OR ("b" AND "c")`)
+	dnf(`"a" AND NOT ("b" OR "c")`)
+	dnf(`"a" OR NOT ("b" AND "c")`)
+	dnf(`"a" AND ("b" OR NOT "c")`)
+	dnf(`"a" OR ("b" AND NOT "c")`)
+	dnf(`"a" AND NOT ("b" OR NOT "c")`)
+	dnf(`"a" OR NOT ("b" AND NOT "c")`)
+	dnf(`"a" OR ("b" OR ("c" OR "d"))`)
+	dnf(`("a" OR "b") OR ("c" OR "d")`)
+	// Output:
+	// before: "a"
+	// after: "a"
+	// before: NOT "a"
+	// after: NOT "a"
+	// before: "a" AND "b"
+	// after: "a" AND "b"
+	// before: "a" OR "b"
+	// after: "a" OR "b"
+	// before: "a" AND ("b" OR "c")
+	// after: ("a" AND "b") OR ("a" AND "c")
+	// before: "a" OR ("b" AND "c")
+	// after: "a" OR ("b" AND "c")
+	// before: "a" AND NOT ("b" OR "c")
+	// after: "a" AND NOT "b" AND NOT "c"
+	// before: "a" OR NOT ("b" AND "c")
+	// after: "a" OR NOT "b" OR NOT "c"
+	// before: "a" AND ("b" OR NOT "c")
+	// after: ("a" AND "b") OR ("a" AND NOT "c")
+	// before: "a" OR ("b" AND NOT "c")
+	// after: "a" OR ("b" AND NOT "c")
+	// before: "a" AND NOT ("b" OR NOT "c")
+	// after: "a" AND "c" AND NOT "b"
+	// before: "a" OR NOT ("b" AND NOT "c")
+	// after: "a" OR NOT "b" OR "c"
+	// before: "a" OR ("b" OR ("c" OR "d"))
+	// after: "a" OR "b" OR "c" OR "d"
+	// before: ("a" OR "b") OR ("c" OR "d")
+	// after: "a" OR "b" OR "c" OR "d"
 }
 
 func ExampleSOP() {
