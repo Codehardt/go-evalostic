@@ -104,6 +104,7 @@ func ExampleSOP() {
 	sop(`"a" AND "b"`)
 	sop(`"a" OR "b"`)
 	sop(`"a" AND ("b" OR "c")`)
+	sop(`"a" AND ("b" OR "c") AND ("d" OR "e")`)
 	sop(`"a" OR ("b" AND "c")`)
 	sop(`"a" AND NOT ("b" OR "c")`)
 	sop(`"a" OR NOT ("b" AND "c")`)
@@ -129,6 +130,9 @@ func ExampleSOP() {
 	// ----- "a" AND ("b" OR "c") -----
 	// before: ("a" AND ("b" OR "c"))
 	// after: (("a" AND "b") OR ("a" AND "c"))
+	// ----- "a" AND ("b" OR "c") AND ("d" OR "e") -----
+	// before: (("a" AND ("b" OR "c")) AND ("d" OR "e"))
+	//after: (((("a" AND "b") OR ("a" AND "c")) AND "d") OR ((("a" AND "b") OR ("a" AND "c")) AND "e"))
 	// ----- "a" OR ("b" AND "c") -----
 	// before: ("a" OR ("b" AND "c"))
 	// after: ("a" OR ("b" AND "c"))
@@ -183,9 +187,15 @@ func ExampleMatchStrings() {
 			fmt.Println(matchPath.String())
 		}
 	}
-	ms(`("a" AND NOT "b") AND NOT (NOT "c" OR "d") AND ("f" OR "g")`)
+	ms(`("a" OR "b") AND ("c" OR "d") AND ("e" OR "f")`)
 	// Output:
-	// ----- ("a" AND NOT "b") AND NOT (NOT "c" OR "d") AND ("f" OR "g") -----
-	// "a", "c", "f", NOT "b", NOT "d"
-	// "a", "c", "g", NOT "b", NOT "d"
+	// ----- ("a" OR "b") AND ("c" OR "d") AND ("e" OR "f") -----
+	// "a", "c", "e"
+	// "a", "d", "e"
+	// "b", "c", "e"
+	// "b", "d", "e"
+	// "a", "c", "f"
+	// "a", "d", "f"
+	// "b", "c", "f"
+	// "b", "d", "f"
 }

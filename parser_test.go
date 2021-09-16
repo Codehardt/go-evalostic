@@ -19,6 +19,7 @@ func Example_parse() {
 	p(`"foo" AND "bar"`)
 	p(`"foo" AND NOT "bar"`)
 	p(`"foo" AND NOT ("bar" OR "baz")`)
+	p(`("foo" OR "bar") AND ("bar" OR "baz") AND ("baaz" OR "qux")`)
 	// Output:
 	// ----- "foo" -----
 	// nodeVAL{"foo"}
@@ -28,6 +29,8 @@ func Example_parse() {
 	// nodeAND{nodeVAL{"foo"},nodeNOT{nodeVAL{"bar"}}}
 	// ----- "foo" AND NOT ("bar" OR "baz") -----
 	// nodeAND{nodeVAL{"foo"},nodeNOT{nodeOR{nodeVAL{"bar"},nodeVAL{"baz"}}}}
+	// ----- ("foo" OR "bar") AND ("bar" OR "baz") AND ("baaz" OR "qux") -----
+	// nodeAND{nodeAND{nodeOR{nodeVAL{"foo"},nodeVAL{"bar"}},nodeOR{nodeVAL{"bar"},nodeVAL{"baz"}}},nodeOR{nodeVAL{"baaz"},nodeVAL{"qux"}}}
 }
 
 func Example_parse_multi() {

@@ -62,9 +62,19 @@ func getAndPaths(n node) []andPath {
 func getUnsortedAndPaths(n node) []andPath {
 	switch v := n.(type) {
 	case nodeAND:
-		return []andPath{append(getUnsortedAndPaths(v.node1)[0], getUnsortedAndPaths(v.node2)[0]...)}
+		var res []andPath
+		c1 := getUnsortedAndPaths(v.node1)
+		c2 := getUnsortedAndPaths(v.node2)
+		for _, andPathC1 := range c1 {
+			for _, andPathC2 := range c2 {
+				res = append(res, append(andPathC1, andPathC2...))
+			}
+		}
+		return res
 	case nodeOR:
-		return append(getUnsortedAndPaths(v.node1), getUnsortedAndPaths(v.node2)...)
+		c1 := getUnsortedAndPaths(v.node1)
+		c2 := getUnsortedAndPaths(v.node2)
+		return append(c1, c2...)
 	case nodeNOT:
 		val := v.node.(nodeVAL)
 		return []andPath{
