@@ -67,27 +67,13 @@ func parse(tokens []token) (node, error) {
 			return nil, errors.New("condition ends with an opening parentheses")
 		}
 		var (
-			rPos   = -1
 			offset = lPos + 1
+			rPos   = findClosingPar(tokens[offset:])
 		)
-		for {
-			if offset >= len(tokens) {
-				return nil, errors.New("missing matching closing parentheses")
-			}
-			rPos = findToken(tokens[offset:], tokenTypeRPAR)
-			if rPos < 0 {
-				return nil, errors.New("missing matching closing parentheses")
-			}
-			rPos += offset
-			if lPos+1 == rPos {
-				return nil, errors.New("empty subexpression found")
-			}
-			anotherLPos := findToken(tokens[offset:rPos], tokenTypeLPAR)
-			if anotherLPos < 0 {
-				break
-			}
-			offset = rPos + 1
+		if rPos < 0 {
+			return nil, errors.New("missing matching closing parentheses")
 		}
+		rPos += offset
 		subNode, err := parse(tokens[lPos+1 : rPos])
 		if err != nil {
 			return nil, fmt.Errorf("could not parse subexpression: %s", err)
@@ -180,4 +166,20 @@ func (n nodeVAL) Condition() string {
 
 func (n nodeNOT) Condition() string {
 	return fmt.Sprintf("NOT %s", n.node.Condition())
+}
+
+func findClosingPar(tokens []token) int {
+	var lpar int // count num lpar's that are between the wrapping par's
+	for i, t := range tokens {
+		if t.tokenType == tokenTypeLPAR {
+			lpar++
+		} else if t.tokenType == tokenTypeRPAR {
+			if lpar == 0 {
+				return i
+			} else {
+				lpar--
+			}
+		}
+	}
+	return -1
 }
