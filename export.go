@@ -9,7 +9,7 @@ import (
 // `"foo" OR "baz"` will be compiled to
 // {"bool":{"should":[{"wildcard":{"raw":{"case_insensitive":false,"value":"*foo*"}}},{"wildcard":{"raw":{"case_insensitive":false,"value":"*bar*"}}}]}}
 func (e *Evalostic) ExportElasticSearchQuery(wildcardField string) string {
-	b, _ := json.Marshal(e.ExportElasticSearchQueryMap(wildcardField))
+	b, _ := json.MarshalIndent(e.ExportElasticSearchQueryMap(wildcardField), "", "  ")
 	return string(b)
 }
 
@@ -21,7 +21,7 @@ func (e *Evalostic) ExportElasticSearchQueryMap(wildcardField string) map[string
 	for k, v := range e.strings {
 		indexToStrings[v] = k
 	}
-	query := e.exportElasticSearchQuerySub(wildcardField, indexToStrings, decisionTreeEntry{value: -1}, e.decisionTree)
+	query := e.exportElasticSearchQuerySub(wildcardField, indexToStrings, decisionTreeEntry{value: -1}, e.decisionTree, false)
 	if query == nil {
 		return make(map[string]interface{})
 	}
@@ -30,8 +30,7 @@ func (e *Evalostic) ExportElasticSearchQueryMap(wildcardField string) map[string
 
 var wildcardReplacer = strings.NewReplacer("\\", "\\\\", "*", "\\*", "?", "\\?")
 
-func (e *Evalostic) exportElasticSearchQuerySub(wildcardField string, indexToStrings map[int]string, entry decisionTreeEntry, node *decisionTreeNode) map[string]interface{} {
-
+func (e *Evalostic) exportElasticSearchQuerySub(wildcardField string, indexToStrings map[int]string, entry decisionTreeEntry, node *decisionTreeNode, not bool) map[string]interface{} {
 	isLeaf := len(node.outputs) != 0
 	wildcard := map[string]interface{}{
 		"wildcard": map[string]interface{}{
@@ -40,6 +39,13 @@ func (e *Evalostic) exportElasticSearchQuerySub(wildcardField string, indexToStr
 				"case_insensitive": entry.ci,
 			},
 		},
+	}
+	if not {
+		wildcard = map[string]interface{}{
+			"bool": map[string]interface{}{
+				"must_not": []interface{}{wildcard},
+			},
+		}
 	}
 	if entry.value == -1 {
 		// special case: do not use root node as wildcard
@@ -50,20 +56,20 @@ func (e *Evalostic) exportElasticSearchQuerySub(wildcardField string, indexToStr
 		return wildcard
 	}
 
-	var should, shouldNot []map[string]interface{}
+	var should []map[string]interface{}
 
 	for subEntry, subNode := range node.children {
-		if subQuery := e.exportElasticSearchQuerySub(wildcardField, indexToStrings, subEntry, subNode); subQuery != nil {
+		if subQuery := e.exportElasticSearchQuerySub(wildcardField, indexToStrings, subEntry, subNode, false); subQuery != nil {
 			should = append(should, subQuery)
 		}
 	}
 	for subEntry, subNode := range node.notChildren {
-		if subQuery := e.exportElasticSearchQuerySub(wildcardField, indexToStrings, subEntry, subNode); subQuery != nil {
-			shouldNot = append(shouldNot, subQuery)
+		if subQuery := e.exportElasticSearchQuerySub(wildcardField, indexToStrings, subEntry, subNode, true); subQuery != nil {
+			should = append(should, subQuery)
 		}
 	}
 
-	toQuery := func(should []map[string]interface{}, not bool) map[string]interface{} {
+	toQuery := func(should []map[string]interface{}) map[string]interface{} {
 		if len(should) == 0 {
 			return nil
 		}
@@ -77,22 +83,10 @@ func (e *Evalostic) exportElasticSearchQuerySub(wildcardField string, indexToStr
 				},
 			}
 		}
-		if not {
-			// wrap OR conditions with a NOT
-			res = map[string]interface{}{
-				"bool": map[string]interface{}{
-					"must_not": []interface{}{res},
-				},
-			}
-		}
 		return res
 	}
 
-	notChildQuery := toQuery(shouldNot, true)
-	if notChildQuery != nil {
-		should = append(should, notChildQuery)
-	}
-	childQuery := toQuery(should, false)
+	childQuery := toQuery(should)
 	if childQuery == nil {
 		return nil
 	}

@@ -1,5 +1,10 @@
 package evalostic
 
+import (
+	"fmt"
+	"strings"
+)
+
 type decisionTreeEntry struct {
 	value int
 	ci    bool
@@ -9,6 +14,29 @@ type decisionTreeNode struct {
 	children    map[decisionTreeEntry]*decisionTreeNode
 	notChildren map[decisionTreeEntry]*decisionTreeNode
 	outputs     []int
+}
+
+func (n *decisionTreeNode) String() string {
+	return n.string(decisionTreeEntry{value: -1}, 0)
+}
+
+func (n *decisionTreeNode) string(entry decisionTreeEntry, depth int) string {
+	indent := strings.Repeat("  ", depth)
+	var c string
+	var nc string
+	for entry, child := range n.children {
+		s := child.string(entry, depth+1)
+		c += s
+	}
+	for entry, child := range n.notChildren {
+		s := child.string(entry, depth+1)
+		nc += s
+	}
+	res := fmt.Sprintf("%s-entry: %d\n%s children:\n%s%s not children:\n%s", indent, entry.value, indent, c, indent, nc)
+	if len(n.outputs) > 0 {
+		res += fmt.Sprintf("%s match!\n", indent)
+	}
+	return res
 }
 
 func (n *decisionTreeNode) add(path andPathIndex, output int) {
