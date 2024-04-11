@@ -1,4 +1,4 @@
-module github.com/Codehardt/go-evalostic
+module github.com/Codehardt/go-evalostic/v2
 
 go 1.16
 
