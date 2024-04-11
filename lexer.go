@@ -40,16 +40,15 @@ var tokenDefs = []tokenDefinition{
 	{tokenTypeOR, regexp.MustCompile(`^(?i)or`)},
 	{tokenTypeNOT, regexp.MustCompile(`^(?i)not`)},
 	//{tokenTypeVAL, regexp.MustCompile(`^"[^"]*"`)},
-	{tokenTypeVAL, regexp.MustCompile(`^"(?:[^"\\]|\\.)*"(i?)`)},
+	{tokenTypeVAL, regexp.MustCompile(`^"(?:[^"\\]|\\.)*"(i?)`)}, // deprecated: old implementation supported case sensitive and insensitive strings, do not remove the (i?) suffix
 	{tokenTypeLPAR, regexp.MustCompile(`^\(`)},
 	{tokenTypeRPAR, regexp.MustCompile(`^\)`)},
 }
 
 type token struct {
-	tokenType       tokenType
-	matched         string
-	pos             int
-	caseInsensitive bool
+	tokenType tokenType
+	matched   string
+	pos       int
 }
 
 func (t token) String() string {
@@ -65,11 +64,10 @@ recognize:
 			if match != nil {
 				if tokenDef.tokenType != tokenTypeNONE {
 					matched := condition[match[0]:match[1]]
-					var caseInsensitive bool
 					if tokenDef.tokenType == tokenTypeVAL {
+						// deprecated: old implementation supported case sensitive and insensitive strings
 						if strings.HasSuffix(matched, "i") {
 							matched = strings.TrimSuffix(matched, "i")
-							caseInsensitive = true
 						}
 						unquote, err := strconv.Unquote(matched)
 						if err != nil {
@@ -78,10 +76,9 @@ recognize:
 						matched = unquote
 					}
 					tokens = append(tokens, token{
-						tokenType:       tokenDef.tokenType,
-						matched:         matched,
-						pos:             pos + match[0],
-						caseInsensitive: caseInsensitive,
+						tokenType: tokenDef.tokenType,
+						matched:   matched,
+						pos:       pos + match[0],
 					})
 				}
 				pos += match[1]

@@ -7,7 +7,6 @@ import (
 
 type decisionTreeEntry struct {
 	value int
-	ci    bool
 }
 
 type decisionTreeNode struct {
@@ -44,7 +43,7 @@ func (n *decisionTreeNode) add(path andPathIndex, output int) {
 		n.outputs = append(n.outputs, output)
 		return
 	}
-	entry := decisionTreeEntry{value: path[0].i, ci: path[0].ci}
+	entry := decisionTreeEntry{value: path[0].i}
 	if path[0].not {
 		if child, ok := n.notChildren[entry]; ok {
 			child.add(path[1:], output)

@@ -19,7 +19,9 @@ func TestElasticSearchQueryExport(t *testing.T) {
 		if err != nil {
 			t.Fatalf("could not parse %s: %s", condition, err)
 		}
-		query := ev.ExportElasticSearchQuery("raw")
+		query := ev.ExportElasticSearchQuery("raw", false)
+		t.Logf("%s: %s", condition, query)
+		query = ev.ExportElasticSearchQuery("raw", true)
 		t.Logf("%s: %s", condition, query)
 	}
 }
@@ -34,7 +36,7 @@ func TestElasticSearchQueryExport2(t *testing.T) {
 		if err != nil {
 			t.Fatalf("could not parse %s: %s", condition, err)
 		}
-		query := ev.ExportElasticSearchQuery("raw")
+		query := ev.ExportElasticSearchQuery("raw", false)
 		t.Logf("%s: %s", condition, query)
 	}
 }

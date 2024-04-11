@@ -8,13 +8,11 @@ import (
 
 type andString struct {
 	not bool
-	ci  bool // case insensitivity
 	str string
 }
 
 type andStringIndex struct {
 	not bool
-	ci  bool // case insensitivity
 	i   int
 }
 
@@ -31,15 +29,11 @@ func (m andPath) String() string {
 }
 
 func (m andString) String() string {
-	var suffix string
-	if m.ci {
-		suffix = "i"
-	}
 	var prefix string
 	if m.not {
 		prefix = "NOT "
 	}
-	return fmt.Sprintf("%s%q%s", prefix, m.str, suffix)
+	return fmt.Sprintf("%s%q", prefix, m.str)
 }
 
 func getAndPaths(n node) []andPath {
@@ -80,7 +74,6 @@ func getUnsortedAndPaths(n node) []andPath {
 		return []andPath{
 			{andString{
 				not: true,
-				ci:  val.caseInsensitive,
 				str: val.nodeValue,
 			}},
 		}
@@ -88,7 +81,6 @@ func getUnsortedAndPaths(n node) []andPath {
 		return []andPath{
 			{andString{
 				not: false,
-				ci:  v.caseInsensitive,
 				str: v.nodeValue,
 			}},
 		}

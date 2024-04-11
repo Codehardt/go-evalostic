@@ -28,9 +28,6 @@ func dnf(cond string) {
 		var part []string
 		for _, str := range mp {
 			val := strconv.Quote(str.str)
-			if str.ci {
-				val += "i"
-			}
 			if str.not {
 				val = "NOT " + val
 			}

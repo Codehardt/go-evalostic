@@ -8,20 +8,20 @@ import (
 // ExportElasticSearchQuery exports the compiled query into an ElasticSearch query, e.g.
 // `"foo" OR "baz"` will be compiled to
 // {"bool":{"should":[{"wildcard":{"raw":{"case_insensitive":false,"value":"*foo*"}}},{"wildcard":{"raw":{"case_insensitive":false,"value":"*bar*"}}}]}}
-func (e *Evalostic) ExportElasticSearchQuery(wildcardField string) string {
-	b, _ := json.MarshalIndent(e.ExportElasticSearchQueryMap(wildcardField), "", "  ")
+func (e *Evalostic) ExportElasticSearchQuery(wildcardField string, useMatchPhrase bool) string {
+	b, _ := json.MarshalIndent(e.ExportElasticSearchQueryMap(wildcardField, useMatchPhrase), "", "  ")
 	return string(b)
 }
 
 // ExportElasticSearchQuery exports the compiled query into an ElasticSearch query, e.g.
 // `"foo" OR "baz"` will be compiled to
 // {"bool":{"should":[{"wildcard":{"raw":{"case_insensitive":false,"value":"foo"}}},{"wildcard":{"raw":{"case_insensitive":false,"value":"bar"}}}]}}
-func (e *Evalostic) ExportElasticSearchQueryMap(wildcardField string) map[string]interface{} {
+func (e *Evalostic) ExportElasticSearchQueryMap(wildcardField string, useMatchPhrase bool) map[string]interface{} {
 	indexToStrings := make(map[int]string)
 	for k, v := range e.strings {
 		indexToStrings[v] = k
 	}
-	query := e.exportElasticSearchQuerySub(wildcardField, indexToStrings, decisionTreeEntry{value: -1}, e.decisionTree, false)
+	query := e.exportElasticSearchQuerySub(wildcardField, useMatchPhrase, indexToStrings, decisionTreeEntry{value: -1}, e.decisionTree, false)
 	if query == nil {
 		return make(map[string]interface{})
 	}
@@ -30,15 +30,22 @@ func (e *Evalostic) ExportElasticSearchQueryMap(wildcardField string) map[string
 
 var wildcardReplacer = strings.NewReplacer("\\", "\\\\", "*", "\\*", "?", "\\?")
 
-func (e *Evalostic) exportElasticSearchQuerySub(wildcardField string, indexToStrings map[int]string, entry decisionTreeEntry, node *decisionTreeNode, not bool) map[string]interface{} {
+func (e *Evalostic) exportElasticSearchQuerySub(wildcardField string, useMatchPhrase bool, indexToStrings map[int]string, entry decisionTreeEntry, node *decisionTreeNode, not bool) map[string]interface{} {
 	isLeaf := len(node.outputs) != 0
 	wildcard := map[string]interface{}{
 		"wildcard": map[string]interface{}{
 			wildcardField: map[string]interface{}{
 				"value":            "*" + wildcardReplacer.Replace(indexToStrings[entry.value]) + "*",
-				"case_insensitive": entry.ci,
+				"case_insensitive": true,
 			},
 		},
+	}
+	if useMatchPhrase {
+		wildcard = map[string]interface{}{
+			"match_phrase": map[string]interface{}{
+				wildcardField: indexToStrings[entry.value],
+			},
+		}
 	}
 	if not {
 		wildcard = map[string]interface{}{
@@ -59,12 +66,12 @@ func (e *Evalostic) exportElasticSearchQuerySub(wildcardField string, indexToStr
 	var should []map[string]interface{}
 
 	for subEntry, subNode := range node.children {
-		if subQuery := e.exportElasticSearchQuerySub(wildcardField, indexToStrings, subEntry, subNode, false); subQuery != nil {
+		if subQuery := e.exportElasticSearchQuerySub(wildcardField, useMatchPhrase, indexToStrings, subEntry, subNode, false); subQuery != nil {
 			should = append(should, subQuery)
 		}
 	}
 	for subEntry, subNode := range node.notChildren {
-		if subQuery := e.exportElasticSearchQuerySub(wildcardField, indexToStrings, subEntry, subNode, true); subQuery != nil {
+		if subQuery := e.exportElasticSearchQuerySub(wildcardField, useMatchPhrase, indexToStrings, subEntry, subNode, true); subQuery != nil {
 			should = append(should, subQuery)
 		}
 	}

@@ -94,7 +94,6 @@ func or(sub ...Condition) Condition  { return OR{Sub: sub} }
 func and(sub ...Condition) Condition { return AND{Sub: sub} }
 func not(sub Condition) Condition    { return NOT{Sub: sub} }
 func val(str string) Condition       { return VALUE(str) }
-func vali(str string) Condition      { return VALUEI(str) }
 
 func (a OR) Match(str string) bool {
 	for _, sub := range a.Sub {
@@ -108,7 +107,7 @@ func (a OR) Match(str string) bool {
 type VALUE string // Case Sensitive
 
 func (v VALUE) Match(str string) bool {
-	return strings.Contains(str, string(v))
+	return strings.Contains(strings.ToLower(str), strings.ToLower(string(v)))
 }
 
 func (v VALUE) ToCondition() string {
@@ -116,20 +115,6 @@ func (v VALUE) ToCondition() string {
 }
 
 func (v VALUE) GetStrings(into map[string]struct{}) {
-	into[string(v)] = struct{}{}
-}
-
-type VALUEI string // Case Insensitive
-
-func (v VALUEI) Match(str string) bool {
-	return strings.Contains(strings.ToLower(str), strings.ToLower(string(v)))
-}
-
-func (v VALUEI) ToCondition() string {
-	return strconv.Quote(string(v)) + "i"
-}
-
-func (v VALUEI) GetStrings(into map[string]struct{}) {
 	into[string(v)] = struct{}{}
 }
 
@@ -143,16 +128,9 @@ var TheTestConditions = []Condition{
 
 	val("a"),
 
-	vali("a"),
-
 	or(
 		val("a"),
 		val("b"),
-	),
-
-	or(
-		vali("a"),
-		vali("b"),
 	),
 
 	and(
@@ -160,28 +138,12 @@ var TheTestConditions = []Condition{
 		val("b"),
 	),
 
-	and(
-		vali("a"),
-		vali("b"),
-	),
-
 	not(
 		val("a"),
-	),
-
-	not(
-		vali("a"),
 	),
 
 	not(
 		and(
-			val("a"),
-			val("b"),
-		),
-	),
-
-	not(
-		or(
 			val("a"),
 			val("b"),
 		),
@@ -413,8 +375,8 @@ func ExampleMatch_CaseInsensitive() {
 	fmt.Println(e.Match("FoO bar"))
 	// Output:
 	// [0]
-	// []
-	// []
+	// [0]
+	// [0]
 	// [0]
 }
 

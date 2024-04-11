@@ -51,7 +51,7 @@ func New(conditions []string) (*Evalostic, error) {
 		for _, mp := range getAndPaths(root.SOP()) {
 			mpi := make(andPathIndex, len(mp))
 			for i, ms := range mp {
-				mpi[i] = andStringIndex{ci: ms.ci, not: ms.not, i: e.strings[ms.str]}
+				mpi[i] = andStringIndex{not: ms.not, i: e.strings[ms.str]}
 			}
 			e.decisionTree.add(mpi, i)
 		}
@@ -65,19 +65,14 @@ func New(conditions []string) (*Evalostic, error) {
 // Match returns all indices of conditions that match the provided string
 func (e *Evalostic) Match(s string) (matchingConditions []int) {
 	var (
-		stringIndices                []int
 		stringIndicesCaseInsensitive []int
 	)
 	if e.ahoCorasick != nil {
-		stringIndices = e.ahoCorasick.Match(s)
 		stringIndicesCaseInsensitive = e.ahoCorasick.Match(strings.ToLower(s))
 	}
 	decisionTreeEntries := make(map[decisionTreeEntry]struct{})
-	for _, si := range stringIndices {
-		decisionTreeEntries[decisionTreeEntry{value: si}] = struct{}{}
-	}
 	for _, si := range stringIndicesCaseInsensitive {
-		decisionTreeEntries[decisionTreeEntry{value: si, ci: true}] = struct{}{}
+		decisionTreeEntries[decisionTreeEntry{value: si}] = struct{}{}
 	}
 	unique := make(map[int]struct{})
 	for _, matchingCondition := range e.decisionTree.find(decisionTreeEntries) {

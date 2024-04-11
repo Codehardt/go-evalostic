@@ -1,7 +1,5 @@
 package evalostic
 
-import "strings"
-
 func extractStrings(n node) ([]string, bool) {
 	switch v := n.(type) {
 	case nodeVAL:
@@ -19,23 +17,5 @@ func extractStrings(n node) ([]string, bool) {
 		return str, !nb
 	default:
 		return nil, true
-	}
-}
-
-func conditionMatches(n node, s string) bool {
-	switch v := n.(type) {
-	case nodeAND:
-		return conditionMatches(v.node1, s) && conditionMatches(v.node2, s)
-	case nodeOR:
-		return conditionMatches(v.node1, s) || conditionMatches(v.node2, s)
-	case nodeNOT:
-		return !conditionMatches(v.node, s)
-	case nodeVAL:
-		if v.caseInsensitive {
-			return strings.Contains(strings.ToLower(s), v.nodeValue)
-		}
-		return strings.Contains(s, v.nodeValue)
-	default:
-		return false
 	}
 }

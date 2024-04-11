@@ -19,8 +19,7 @@ type (
 	oneSubNode  struct{ node node }
 	twoSubNodes struct{ node1, node2 node }
 	valueNode   struct {
-		nodeValue       string
-		caseInsensitive bool
+		nodeValue string
 	}
 )
 
@@ -99,10 +98,8 @@ func parse(tokens []token) (node, error) {
 				switch tokenType {
 				case tokenTypeVAL:
 					matched := token.matched
-					if token.caseInsensitive {
-						matched = strings.ToLower(matched)
-					}
-					res[i] = nodeVAL{valueNode{nodeValue: matched, caseInsensitive: token.caseInsensitive}}
+					matched = strings.ToLower(matched)
+					res[i] = nodeVAL{valueNode{nodeValue: matched}}
 				default:
 					if i+1 >= len(res) {
 						return nil, fmt.Errorf("missing parameter for %s operator", tokenTypeString[tokenType])
@@ -158,9 +155,6 @@ func (n nodeOR) Condition() string {
 }
 
 func (n nodeVAL) Condition() string {
-	if n.caseInsensitive {
-		return strconv.Quote(n.nodeValue) + "i"
-	}
 	return strconv.Quote(n.nodeValue)
 }
 
