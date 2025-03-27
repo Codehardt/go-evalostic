@@ -17,94 +17,114 @@ func (e *Evalostic) ExportElasticSearchQuery(wildcardField string, useMatchPhras
 // `"foo" OR "baz"` will be compiled to
 // {"bool":{"should":[{"wildcard":{"raw":{"case_insensitive":false,"value":"foo"}}},{"wildcard":{"raw":{"case_insensitive":false,"value":"bar"}}}]}}
 func (e *Evalostic) ExportElasticSearchQueryMap(wildcardField string, useMatchPhrase bool) map[string]interface{} {
-	indexToStrings := make(map[int]string)
-	for k, v := range e.strings {
-		indexToStrings[v] = k
+	var root node
+	for _, n := range e.orig {
+		if root == nil {
+			root = n
+		} else {
+			root = nodeOR{twoSubNodes{root, n}}
+		}
 	}
-	query := e.exportElasticSearchQuerySub(wildcardField, useMatchPhrase, indexToStrings, decisionTreeEntry{value: -1}, e.decisionTree, false)
-	if query == nil {
-		return make(map[string]interface{})
+	return nodeToElasticSearchQuery(root, useMatchPhrase)
+}
+
+func nodeToElasticSearchQuery(n node, useMatchPhrase bool) map[string]interface{} {
+	switch v := n.(type) {
+	case nodeVAL:
+		return leafToElasticSearchQuery(v, useMatchPhrase)
+	case nodeNOT:
+		return notToElasticSearchQuery(v, useMatchPhrase)
+	case nodeOR:
+		return orToElasticSearchQuery(v, useMatchPhrase)
+	case nodeAND:
+		return andToElasticSearchQuery(v, useMatchPhrase)
+	default:
+		return nil
 	}
-	return query
 }
 
 var wildcardReplacer = strings.NewReplacer("\\", "\\\\", "*", "\\*", "?", "\\?")
 
-func (e *Evalostic) exportElasticSearchQuerySub(wildcardField string, useMatchPhrase bool, indexToStrings map[int]string, entry decisionTreeEntry, node *decisionTreeNode, not bool) map[string]interface{} {
-	isLeaf := len(node.outputs) != 0
-	wildcard := map[string]interface{}{
-		"wildcard": map[string]interface{}{
-			wildcardField: map[string]interface{}{
-				"value":            "*" + wildcardReplacer.Replace(indexToStrings[entry.value]) + "*",
-				"case_insensitive": true,
-			},
-		},
-	}
-	if useMatchPhrase {
-		wildcard = map[string]interface{}{
-			"match_phrase": map[string]interface{}{
-				wildcardField: indexToStrings[entry.value],
-			},
-		}
-	}
-	if not {
-		wildcard = map[string]interface{}{
-			"bool": map[string]interface{}{
-				"must_not": []interface{}{wildcard},
-			},
-		}
-	}
-	if entry.value == -1 {
-		// special case: do not use root node as wildcard
-		wildcard = nil
-	}
-	if isLeaf && wildcard != nil {
-		// special case: if it's a leaf, we don't need to process the sub tree
-		return wildcard
-	}
-
-	var should []map[string]interface{}
-
-	for subEntry, subNode := range node.children {
-		if subQuery := e.exportElasticSearchQuerySub(wildcardField, useMatchPhrase, indexToStrings, subEntry, subNode, false); subQuery != nil {
-			should = append(should, subQuery)
-		}
-	}
-	for subEntry, subNode := range node.notChildren {
-		if subQuery := e.exportElasticSearchQuerySub(wildcardField, useMatchPhrase, indexToStrings, subEntry, subNode, true); subQuery != nil {
-			should = append(should, subQuery)
-		}
-	}
-
-	toQuery := func(should []map[string]interface{}) map[string]interface{} {
-		if len(should) == 0 {
-			return nil
-		}
-		var res map[string]interface{}
-		if len(should) == 1 {
-			res = should[0]
-		} else {
-			res = map[string]interface{}{
-				"bool": map[string]interface{}{
-					"should": should,
-				},
-			}
-		}
-		return res
-	}
-
-	childQuery := toQuery(should)
-	if childQuery == nil {
-		return nil
-	}
-	if wildcard == nil {
-		return childQuery
+func notToElasticSearchQuery(n nodeNOT, useMatchPhrase bool) map[string]interface{} {
+	if not, ok := n.node.(nodeNOT); ok { // check for double negation
+		return nodeToElasticSearchQuery(not.node, useMatchPhrase)
 	}
 	return map[string]interface{}{
 		"bool": map[string]interface{}{
-			"must": []interface{}{
-				wildcard,
-				childQuery,
+			"must_not": []map[string]interface{}{
+				nodeToElasticSearchQuery(n.node, useMatchPhrase),
+			},
+		},
+	}
+}
+
+func flattenOr(n nodeOR) []node {
+	var nodes []node
+	if or, ok := n.node1.(nodeOR); ok {
+		nodes = append(nodes, flattenOr(or)...)
+	} else {
+		nodes = append(nodes, n.node1)
+	}
+	if or, ok := n.node2.(nodeOR); ok {
+		nodes = append(nodes, flattenOr(or)...)
+	} else {
+		nodes = append(nodes, n.node2)
+	}
+	return nodes
+}
+
+func flattenAnd(n nodeAND) []node {
+	var nodes []node
+	if and, ok := n.node1.(nodeAND); ok {
+		nodes = append(nodes, flattenAnd(and)...)
+	} else {
+		nodes = append(nodes, n.node1)
+	}
+	if and, ok := n.node2.(nodeAND); ok {
+		nodes = append(nodes, flattenAnd(and)...)
+	} else {
+		nodes = append(nodes, n.node2)
+	}
+	return nodes
+}
+
+func orToElasticSearchQuery(n nodeOR, useMatchPhrase bool) map[string]interface{} {
+	var should []map[string]interface{}
+	for _, node := range flattenOr(n) {
+		should = append(should, nodeToElasticSearchQuery(node, useMatchPhrase))
+	}
+	return map[string]interface{}{
+		"bool": map[string]interface{}{
+			"should": should,
+		},
+	}
+}
+
+func andToElasticSearchQuery(n nodeAND, useMatchPhrase bool) map[string]interface{} {
+	var must []map[string]interface{}
+	for _, node := range flattenAnd(n) {
+		must = append(must, nodeToElasticSearchQuery(node, useMatchPhrase))
+	}
+	return map[string]interface{}{
+		"bool": map[string]interface{}{
+			"must": must,
+		},
+	}
+}
+
+func leafToElasticSearchQuery(n nodeVAL, useMatchPhrase bool) map[string]interface{} {
+	if useMatchPhrase {
+		return map[string]interface{}{
+			"match_phrase": map[string]interface{}{
+				"raw": n.nodeValue,
+			},
+		}
+	}
+	return map[string]interface{}{
+		"wildcard": map[string]interface{}{
+			"raw": map[string]interface{}{
+				"value":            "*" + wildcardReplacer.Replace(n.nodeValue) + "*",
+				"case_insensitive": true,
 			},
 		},
 	}

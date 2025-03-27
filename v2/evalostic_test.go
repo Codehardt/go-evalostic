@@ -271,7 +271,7 @@ func TestEvalosticAgainstStringContains(t *testing.T) {
 	}
 }
 
-func assert(t *testing.T, b bool) {
+func assertTrue(t *testing.T, b bool) {
 	_, f, l, _ := runtime.Caller(1)
 	if !b {
 		t.Fatalf("assertion failed in %s:%d", f, l)
@@ -298,23 +298,23 @@ func TestEvalostic(t *testing.T) {
 		`"1" AND NOT "2"`,
 		`"1" AND NOT "2"`,
 	})
-	assert(t, err == nil)
-	assert(t, sameIntegers(e.Match("foo"), []int{0}))
-	assert(t, sameIntegers(e.Match("bar"), []int{0}))
-	assert(t, sameIntegers(e.Match("foo bar"), []int{0}))
-	assert(t, sameIntegers(e.Match("baz"), []int{}))
-	assert(t, sameIntegers(e.Match("baz qux"), []int{1}))
-	assert(t, sameIntegers(e.Match("qux baz"), []int{1}))
-	assert(t, sameIntegers(e.Match("ab"), []int{}))
-	assert(t, sameIntegers(e.Match("ac"), []int{2}))
-	assert(t, sameIntegers(e.Match("ad"), []int{2}))
-	assert(t, sameIntegers(e.Match("bc"), []int{2}))
-	assert(t, sameIntegers(e.Match("bd"), []int{2}))
-	assert(t, sameIntegers(e.Match("cd"), []int{}))
-	assert(t, sameIntegers(e.Match("abcd"), []int{2}))
-	assert(t, sameIntegers(e.Match("1"), []int{3, 4}))
-	assert(t, sameIntegers(e.Match("2"), []int{}))
-	assert(t, sameIntegers(e.Match("12"), []int{}))
+	assertTrue(t, err == nil)
+	assertTrue(t, sameIntegers(e.Match("foo"), []int{0}))
+	assertTrue(t, sameIntegers(e.Match("bar"), []int{0}))
+	assertTrue(t, sameIntegers(e.Match("foo bar"), []int{0}))
+	assertTrue(t, sameIntegers(e.Match("baz"), []int{}))
+	assertTrue(t, sameIntegers(e.Match("baz qux"), []int{1}))
+	assertTrue(t, sameIntegers(e.Match("qux baz"), []int{1}))
+	assertTrue(t, sameIntegers(e.Match("ab"), []int{}))
+	assertTrue(t, sameIntegers(e.Match("ac"), []int{2}))
+	assertTrue(t, sameIntegers(e.Match("ad"), []int{2}))
+	assertTrue(t, sameIntegers(e.Match("bc"), []int{2}))
+	assertTrue(t, sameIntegers(e.Match("bd"), []int{2}))
+	assertTrue(t, sameIntegers(e.Match("cd"), []int{}))
+	assertTrue(t, sameIntegers(e.Match("abcd"), []int{2}))
+	assertTrue(t, sameIntegers(e.Match("1"), []int{3, 4}))
+	assertTrue(t, sameIntegers(e.Match("2"), []int{}))
+	assertTrue(t, sameIntegers(e.Match("12"), []int{}))
 }
 
 func ExampleMatch() {

@@ -16,6 +16,7 @@ type Evalostic struct {
 	ahoCorasick  ahocorasick.AhoCorasick
 	strings      map[string]int
 	mapping      map[int][]int // which string can be found in which condition
+	orig         []node        // original conditions for export
 }
 
 // New builds a new Evalostic matcher that compiles all conditions to one big rule set that can be applied to strings.
@@ -37,6 +38,7 @@ func New(conditions []string) (*Evalostic, error) {
 		if err != nil {
 			return nil, fmt.Errorf("condition %d: %s", i, err)
 		}
+		e.orig = append(e.orig, root)
 		condStrings, _ := extractStrings(root)
 		for _, str := range condStrings {
 			strI, ok := e.strings[str]
